@@ -3,6 +3,14 @@ from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 from airflow.contrib.hooks.aws_hook import AwsHook
 
+# Operator to load data from S3 to Redshift. 
+# Parameter details:
+## s3_bucket: Location of the S3 bucket
+## s3_prefix: The bucket holds both logs and events. The prefix helps define which one is being processed
+## table: The destination table
+## redshift_conn_id: Name of the redshift conneciton created using Airflow Admin
+## aws_conn_id: Name of the aws connection created using Airflow Admin
+## extra_params: Use this to provide instruction on how the data structure should be read
 
 class StageToRedshiftOperator(BaseOperator):
     ui_color = '#8EB6D4'
