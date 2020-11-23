@@ -13,13 +13,9 @@ from airflow.operators.python_operator import PythonOperator
 
 from helpers import SqlQueries
 
-# AWS_KEY = os.environ.get('AWS_KEY')
-# AWS_SECRET = os.environ.get('AWS_SECRET')
-
 # Setup default arguments for the dag
 default_args = {
     'owner': 'sskelly',
-#     'start_date': datetime(2019, 1, 12),
     'start_date' :  datetime(2018, 11, 1),
     'depends_on_past': False,
     'email_on_retry': False,
@@ -47,11 +43,14 @@ stage_events_to_redshift = StageToRedshiftOperator(
     redshift_conn_id="redshift",
     aws_credentials_id="aws_credentials",
     s3_bucket="udacity-dend",
-    s3_prefix="log_data/2018/11/2018-11-01-events.json",
+    #  To test the DAG efficiently, enable the following to work with specific file.
+    #     s3_prefix="log_data/2018/11/2018-11-01-events.json",  
+    s3_prefix="log_data", 
     extra_params=" IGNOREHEADER 1 FORMAT AS JSON 's3://udacity-dend/log_json_path.json'"
     
 )
 
+# Post Song data into redshit
 stage_songs_to_redshift = StageToRedshiftOperator(
     task_id='Stage_songs',
     dag=dag,
@@ -59,10 +58,13 @@ stage_songs_to_redshift = StageToRedshiftOperator(
     redshift_conn_id="redshift",
     aws_credentials_id="aws_credentials",
     s3_bucket='udacity-dend',
-    s3_prefix='song-data/A/A/A/TRAAAAK128F9318786.json',
+    #  To test the DAG efficiently, enable the following to work with specific file.
+    #  s3_prefix='song-data/A/A/A/TRAAAAK128F9318786.json',
+    s3_prefix='song-data',
     extra_params="FORMAT AS JSON 'auto'"
 )
 
+# To make the DAG independent, it will create missing tables at the beginning of each run
 create_staging_events_table = PostgresOperator(
     task_id='Create_staging_events_table',
     dag=dag,
@@ -114,6 +116,8 @@ create_time_table = PostgresOperator(
 
 schema_created = DummyOperator(task_id='Schema_created', dag=dag)
 
+# Loads
+
 load_songplays_table = LoadFactOperator(
     task_id='Load_songplays_fact_table',
     dag=dag,
@@ -158,6 +162,7 @@ load_time_dimension_table = LoadDimensionOperator(
     mode='truncate'
 )
 
+# Data Quality
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
     dag=dag,
@@ -174,8 +179,6 @@ run_quality_checks = DataQualityOperator(
 end_operator = DummyOperator(task_id='Stop_execution', dag=dag)
 
 # DAG dependencies
-# Run this one time and then enable the test flow below.
-
 start_operator >> create_staging_songs_table
 start_operator >> create_staging_events_table
 start_operator >> create_songplays_table
