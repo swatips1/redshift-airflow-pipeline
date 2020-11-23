@@ -2,6 +2,10 @@ from airflow.hooks.postgres_hook import PostgresHook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
+# Operator to check the quality of the data at its ultimate destination
+# Parameter details:
+## redshift_conn_id: Name of the redshift conneciton created using Airflow Admin
+## check_stmts: The queries to be executed to check data quality.
 
 class DataQualityOperator(BaseOperator):
     ui_color = '#89DA59'
